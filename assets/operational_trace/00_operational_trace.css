@@ -5,9 +5,12 @@
     --operational-trace-line-start: 50%;
     --operational-trace-line-end: 50%;
 
-    --operational-trace-baseline-color: #5b5c64;
-    --operational-trace-line-neutral: #b8b8b8;
-    --operational-trace-line-muted: #dddddd;
+    /*--operational-trace-baseline-color: #5b5c64;*/
+    --operational-trace-baseline-color: #E1E1E1;
+    /*--operational-trace-line-neutral: #b8b8b8;*/
+    /*--operational-trace-line-muted: #dddddd;*/
+    --operational-trace-line-neutral: #dddddd;
+    --operational-trace-line-muted: #b8b8b8;
     --operational-trace-point-size: 16px;
     --operational-trace-chevron-size: 9px;
     --operational-trace-contract-chevron-size: 6px;
@@ -177,9 +180,10 @@
 .operational-trace__point-core {
     position: absolute;
     inset: 0;
-    border: 2px solid #e1e1e1;
+    border: 2px solid var(--operational-trace-baseline-color);
     border-radius: 50%;
-    background: var(--operational-trace-baseline-color);
+    /*background: var(--operational-trace-baseline-color);*/
+    background: #5b5c64;
 }
 
 .operational-trace__route {
@@ -267,6 +271,7 @@
     color: #ffffff;
     line-height: 1;
     z-index: 6;
+    border: 1px solid var(--operational-trace-baseline-color);
 }
 
 .operational-trace__marker--critical {
@@ -275,7 +280,7 @@
 
 .operational-trace__marker--warning {
     --operational-trace-marker-color: var(--operational-trace-warning);
-    color: #2b2b2b;
+    /*color: #2b2b2b;*/
 }
 
 .operational-trace__marker[data-selected='true'] {

@@ -19,15 +19,23 @@ body {
 
 .operational-trace-demo__header h1,
 .operational-trace-demo__section h2,
-.operational-trace-demo p {
+.operational-trace-demo p,
+.operational-trace-demo output {
     margin: 0;
+    color: #E1E1E1;
+}
+
+.operational-trace-demo__header :is(
+    h1, p
+) {
+    color: #4d4d4d;
 }
 
 .operational-trace-demo__section {
     padding: .75rem;
     border: 1px solid #bdbdbd;
     border-radius: .6rem;
-    background: #e1e1e1;
+    background: #858585;
 }
 
 .operational-trace-demo__section-header {

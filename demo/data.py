@@ -148,6 +148,7 @@ def build_integrated_definition(*, revision: int) -> OperationalTraceDefinition:
         OperationalTracePoint(key='puerto', label='Puerto'),
     )
     carguio_occurrence = 'io-loading#2' if revision >= 3 else 'io-loading#1'
+    carguio_effect = ('transporte', 'chancado_stmg') if revision >= 3 else ('transporte', 'chancado_stmg', 'stock_chacay')
     alarms = (
         _alarm(
             alarm_id='io-mp10',
@@ -170,9 +171,9 @@ def build_integrated_definition(*, revision: int) -> OperationalTraceDefinition:
             ),
             criticality='C1',
             active_time='2.1 h',
-            tone=AlarmTone.CRITICAL,
+            tone=AlarmTone.CRITICAL if revision >= 3 else AlarmTone.WARNING,
             origin='carguio',
-            affected=('transporte', 'chancado_stmg'),
+            affected=carguio_effect,
             order=1,
             group='mine',
         ),
