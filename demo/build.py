@@ -27,10 +27,11 @@ def build_demo_layout() -> Component:
             html.Header(
                 className='operational-trace-demo__header',
                 children=[
-                    html.H1(children=['Operational trace · iteration 4']),
+                    html.H1(children=['Operational trace · preview automático']),
                     html.P(
                         children=[
-                            'Consulta cada 5 segundos y cambio de ocurrencia en la cuarta revisión.'
+                            'Cada ruta se revela, permanece completa 5 segundos '
+                            'y rota sin callbacks adicionales.'
                         ],
                     ),
                 ],

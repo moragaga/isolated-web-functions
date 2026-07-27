@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .enums import AlarmTone, OperationalTraceMode
 
@@ -56,6 +56,37 @@ class OperationalTraceGroup:
             raise ValueError('Trace group alarm capacity must be greater than zero.')
         if self.max_visible_alarm_count > len(self.point_keys):
             raise ValueError('Trace group alarm capacity must not exceed its process count.')
+
+
+@dataclass(frozen=True, slots=True)
+class OperationalTracePreviewConfig:
+    enabled: bool = True
+    reveal_duration_ms: int = 4_000
+    hold_duration_ms: int = 20_000
+    fade_duration_ms: int = 3_000
+    between_routes_ms: int = 250
+    cycle_pause_ms: int = 1_500
+    max_cycle_size: int = 6
+    keep_single_route_visible: bool = True
+
+    def __post_init__(self) -> None:
+        duration_values = (
+            self.reveal_duration_ms,
+            self.hold_duration_ms,
+            self.fade_duration_ms,
+            self.between_routes_ms,
+            self.cycle_pause_ms,
+        )
+        if any(value < 0 for value in duration_values):
+            raise ValueError('Trace preview durations must not be negative.')
+        if self.reveal_duration_ms <= 0:
+            raise ValueError('Trace preview reveal duration must be greater than zero.')
+        if self.hold_duration_ms <= 0:
+            raise ValueError('Trace preview hold duration must be greater than zero.')
+        if self.fade_duration_ms <= 0:
+            raise ValueError('Trace preview fade duration must be greater than zero.')
+        if self.max_cycle_size <= 0:
+            raise ValueError('Trace preview cycle size must be greater than zero.')
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,6 +166,14 @@ class AlarmDefinition:
         return (self.origin_process_key, *self.affected_process_keys)
 
     @property
+    def route_signature(self) -> str:
+        return '>'.join(self.route_process_keys)
+
+    @property
+    def preview_key(self) -> str:
+        return f'{self.selection_key}|{self.route_signature}'
+
+    @property
     def is_local_route(self) -> bool:
         return not self.affected_process_keys
 
@@ -148,6 +187,9 @@ class OperationalTraceDefinition:
     groups: tuple[OperationalTraceGroup, ...] = ()
     process_slot_count: int = 6
     distributed_threshold: int = 2
+    preview: OperationalTracePreviewConfig = field(
+        default_factory=OperationalTracePreviewConfig,
+    )
 
     @classmethod
     def from_iterables(
@@ -160,6 +202,7 @@ class OperationalTraceDefinition:
         groups: Iterable[OperationalTraceGroup] = (),
         process_slot_count: int = 6,
         distributed_threshold: int = 2,
+        preview: OperationalTracePreviewConfig | None = None,
     ) -> OperationalTraceDefinition:
         return cls(
             scope_id=scope_id,
@@ -169,6 +212,7 @@ class OperationalTraceDefinition:
             groups=tuple(groups),
             process_slot_count=process_slot_count,
             distributed_threshold=distributed_threshold,
+            preview=preview or OperationalTracePreviewConfig(),
         )
 
     def __post_init__(self) -> None:
@@ -250,13 +294,10 @@ class OperationalTraceDefinition:
             if alarm.placement_group_key is None:
                 raise ValueError('Integrated operations alarms require a placement group.')
             if alarm.placement_group_key not in group_by_key:
-                raise ValueError('Integrated operations alarm placement group is unknown.')
-            if alarm.is_distributed:
-                raise ValueError('Integrated operations alarms must not be distributed.')
-
+                raise ValueError('Alarm placement group is unknown.')
             group = group_by_key[alarm.placement_group_key]
             if alarm.origin_process_key not in group.point_keys:
-                raise ValueError('Integrated alarm origin must belong to its placement group.')
+                raise ValueError('Alarm origin process must belong to its placement group.')
             alarm_count_by_group[group.key] += 1
 
         for group in self.groups:

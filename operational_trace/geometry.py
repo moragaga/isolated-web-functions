@@ -20,6 +20,7 @@ class AlarmRouteGeometry:
     origin_x_percent: float
     has_horizontal_trunk: bool
     is_local_route: bool
+    preview_direction: str
 
 
 def resolve_process_positions(
@@ -57,6 +58,11 @@ def resolve_alarm_route_geometry(
     has_horizontal_trunk = (
         trunk_end_x_percent - trunk_start_x_percent
     ) > 0.000001
+    preview_direction = _resolve_preview_direction(
+        card_x_percent=card_x_percent,
+        trunk_start_x_percent=trunk_start_x_percent,
+        trunk_end_x_percent=trunk_end_x_percent,
+    )
 
     return AlarmRouteGeometry(
         selection_key=alarm.selection_key,
@@ -67,4 +73,16 @@ def resolve_alarm_route_geometry(
         origin_x_percent=process_positions[alarm.origin_process_key],
         has_horizontal_trunk=has_horizontal_trunk,
         is_local_route=alarm.is_local_route,
+        preview_direction=preview_direction,
     )
+
+
+def _resolve_preview_direction(
+    *,
+    card_x_percent: float,
+    trunk_start_x_percent: float,
+    trunk_end_x_percent: float,
+) -> str:
+    left_distance = card_x_percent - trunk_start_x_percent
+    right_distance = trunk_end_x_percent - card_x_percent
+    return 'forward' if right_distance >= left_distance else 'reverse'

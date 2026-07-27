@@ -75,17 +75,26 @@ def build_distributed_definition(*, revision: int) -> OperationalTraceDefinition
         if revision >= 3
         else 'distributed-central#1'
     )
-    alarms = (
-        _alarm(
-            alarm_id='distributed-normal',
-            occurrence_id='distributed-normal#1',
-            title=f'Disponibilidad bajo objetivo{_suffix(revision)}',
-            criticality='C2',
-            active_time='55 min',
-            tone=AlarmTone.WARNING,
-            origin='flotacion',
-            order=0,
-        ),
+    distributed_two_tone = (
+        AlarmTone.WARNING
+        if revision >= 3
+        else AlarmTone.CRITICAL
+    )
+    normal_alarms = ()
+    if revision < 2:
+        normal_alarms = (
+            _alarm(
+                alarm_id='distributed-normal',
+                occurrence_id='distributed-normal#1',
+                title=f'Disponibilidad bajo objetivo{_suffix(revision)}',
+                criticality='C2',
+                active_time='55 min',
+                tone=AlarmTone.WARNING,
+                origin='flotacion',
+                order=0,
+            ),
+        )
+    distributed_alarms = (
         _alarm(
             alarm_id='distributed-south',
             occurrence_id='distributed-south#1',
@@ -105,9 +114,9 @@ def build_distributed_definition(*, revision: int) -> OperationalTraceDefinition
                 if revision >= 3
                 else 'H₂S sector central'
             ),
-            criticality='C1',
+            criticality='C1' if revision < 3 else 'C2',
             active_time='24 min',
-            tone=AlarmTone.CRITICAL,
+            tone=distributed_two_tone,
             origin='flotacion',
             order=2,
             distributed=True,
@@ -128,7 +137,7 @@ def build_distributed_definition(*, revision: int) -> OperationalTraceDefinition
         scope_id='distributed-demo',
         mode=OperationalTraceMode.DISTRIBUTED,
         points=(PROCESS_POINT,),
-        alarms=alarms,
+        alarms=(*normal_alarms, *distributed_alarms),
     )
 
 
@@ -148,7 +157,11 @@ def build_integrated_definition(*, revision: int) -> OperationalTraceDefinition:
         OperationalTracePoint(key='puerto', label='Puerto'),
     )
     carguio_occurrence = 'io-loading#2' if revision >= 2 else 'io-loading#1'
-    carguio_effect = ('transporte', 'chancado_stmg') if revision >= 2 else ('transporte', 'chancado_stmg', 'stock_chacay')
+    carguio_effect = (
+        ('transporte', 'chancado_stmg')
+        if revision >= 2
+        else ('transporte', 'chancado_stmg', 'stock_chacay')
+    )
     alarms = (
         _alarm(
             alarm_id='io-mp10',
@@ -263,7 +276,7 @@ def resolve_distributed_active_selection_key(
         central_key,
         'distributed-north#1',
     )
-    return keys[n_intervals % len(keys)]
+    return keys[(n_intervals // 6) % len(keys)]
 
 
 def _alarm(

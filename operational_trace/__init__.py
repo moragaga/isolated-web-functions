@@ -6,6 +6,7 @@ from .models import (
     OperationalTraceDefinition,
     OperationalTraceGroup,
     OperationalTracePoint,
+    OperationalTracePreviewConfig,
 )
 
 
@@ -28,6 +29,7 @@ __all__ = (
     'OperationalTraceGroup',
     'OperationalTraceMode',
     'OperationalTracePoint',
+    'OperationalTracePreviewConfig',
     'build_operational_trace_module',
     'register_operational_trace_callbacks',
 )

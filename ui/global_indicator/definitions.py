@@ -33,7 +33,17 @@ class IndicatorDefinition:
         return f'{self.indicator_key}_{self.temporality_key}_color_inst'
 
 @dataclass(frozen=True, slots=True)
+class IndicatorPropertiesDefinition:
+    label: int
+    temporality: str
+    real_value: str
+    plan_value: str
+    last_measurement_label: str
+    last_measurement_value: str
+
+@dataclass(frozen=True, slots=True)
 class GlobalIndicatorDefinition:
     label: str
     unit: str
+    properties: IndicatorPropertiesDefinition
     indicators: tuple[IndicatorDefinition, ...]

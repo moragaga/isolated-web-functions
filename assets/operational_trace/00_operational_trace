@@ -4,11 +4,13 @@
     --operational-trace-line-x: 50%;
     --operational-trace-line-start: 50%;
     --operational-trace-line-end: 50%;
-
-    /*--operational-trace-baseline-color: #5b5c64;*/
-    --operational-trace-baseline-color: #E1E1E1;
-    /*--operational-trace-line-neutral: #b8b8b8;*/
-    /*--operational-trace-line-muted: #dddddd;*/
+    --operational-trace-preview-delay: 0ms;
+    --operational-trace-preview-duration: 1ms;
+    --operational-trace-preview-marker-delay: 0ms;
+    --operational-trace-preview-reveal-duration: 4000ms;
+    --operational-trace-preview-hold-duration: 20000ms;
+    --operational-trace-preview-fade-duration: 3000ms;
+    --operational-trace-baseline-color: #e1e1e1;
     --operational-trace-line-neutral: #dddddd;
     --operational-trace-line-muted: #b8b8b8;
     --operational-trace-point-size: 16px;
@@ -25,7 +27,6 @@
     width: 100%;
     min-width: 0;
 }
-
 
 .operational-alarm-board {
     display: grid;
@@ -68,7 +69,6 @@
 .operational-alarm-card[data-rotation-active='false'] {
     display: none;
 }
-
 
 .operational-alarm-card__selector {
     display: flex;
@@ -182,7 +182,6 @@
     inset: 0;
     border: 2px solid var(--operational-trace-baseline-color);
     border-radius: 50%;
-    /*background: var(--operational-trace-baseline-color);*/
     background: #5b5c64;
 }
 
@@ -193,7 +192,9 @@
     color: var(--operational-trace-route-color);
     opacity: 1;
     z-index: 1;
-    transition: color .12s ease;
+    transition:
+        color .12s ease,
+        opacity var(--operational-trace-preview-fade-duration) ease;
 }
 
 .operational-trace__route--critical {
@@ -211,6 +212,16 @@
 .operational-trace[data-has-selection='true'] .operational-trace__route[data-selected='false'] {
     --operational-trace-route-color: var(--operational-trace-line-muted);
     opacity: 1;
+}
+
+.operational-trace__route[data-previewing='true'] {
+    --operational-trace-route-color: var(--operational-trace-route-active-color);
+    opacity: 1;
+    z-index: 3;
+}
+
+.operational-trace__route[data-previewing='true'][data-preview-phase='fade'] {
+    opacity: 0;
 }
 
 .operational-trace__route[data-selected='true'] {
@@ -234,6 +245,7 @@
     width: 2px;
     height: var(--operational-trace-route-y);
     transform: translateX(-50%);
+    transform-origin: top center;
 }
 
 .operational-trace__route-trunk {
@@ -244,12 +256,21 @@
     transform: translateY(-50%);
 }
 
+.operational-trace__route--preview-forward .operational-trace__route-trunk {
+    transform-origin: left center;
+}
+
+.operational-trace__route--preview-reverse .operational-trace__route-trunk {
+    transform-origin: right center;
+}
+
 .operational-trace__route-process-connector {
     inset-inline-start: var(--operational-trace-line-x);
     inset-block-start: var(--operational-trace-route-y);
     width: 2px;
     height: calc(var(--operational-trace-baseline-y) - var(--operational-trace-route-y));
     transform: translateX(-50%);
+    transform-origin: top center;
 }
 
 .operational-trace__route-local-connector {
@@ -258,6 +279,48 @@
     width: 2px;
     height: var(--operational-trace-baseline-y);
     transform: translateX(-50%);
+    transform-origin: top center;
+}
+
+.operational-trace__route[data-previewing='true'][data-preview-phase='reveal']
+.operational-trace__route-card-connector,
+.operational-trace__route[data-previewing='true'][data-preview-phase='reveal']
+.operational-trace__route-process-connector {
+    animation: operational-trace-preview-vertical var(--operational-trace-preview-duration) ease forwards;
+    animation-delay: var(--operational-trace-preview-delay);
+    animation-fill-mode: both;
+}
+
+.operational-trace__route[data-previewing='true'][data-preview-phase='reveal']
+.operational-trace__route-local-connector {
+    animation: operational-trace-preview-local var(--operational-trace-preview-duration) ease forwards;
+    animation-delay: var(--operational-trace-preview-delay);
+    animation-fill-mode: both;
+}
+
+.operational-trace__route--preview-forward[data-previewing='true'][data-preview-phase='reveal']
+.operational-trace__route-trunk {
+    animation: operational-trace-preview-horizontal-forward var(--operational-trace-preview-duration) ease forwards;
+    animation-delay: var(--operational-trace-preview-delay);
+    animation-fill-mode: both;
+}
+
+.operational-trace__route--preview-reverse[data-previewing='true'][data-preview-phase='reveal']
+.operational-trace__route-trunk {
+    animation: operational-trace-preview-horizontal-reverse var(--operational-trace-preview-duration) ease forwards;
+    animation-delay: var(--operational-trace-preview-delay);
+    animation-fill-mode: both;
+}
+
+.operational-trace__route[data-selected='true']
+.operational-trace__route-card-connector,
+.operational-trace__route[data-selected='true']
+.operational-trace__route-process-connector,
+.operational-trace__route[data-selected='true']
+.operational-trace__route-local-connector,
+.operational-trace__route[data-selected='true']
+.operational-trace__route-trunk {
+    animation: none;
 }
 
 .operational-trace__marker {
@@ -266,12 +329,14 @@
     inset: 0;
     display: none;
     place-items: center;
+    border: 1px solid var(--operational-trace-baseline-color);
     border-radius: 50%;
     background: var(--operational-trace-marker-color);
     color: #ffffff;
     line-height: 1;
+    opacity: 1;
     z-index: 6;
-    border: 1px solid var(--operational-trace-baseline-color);
+    transition: opacity var(--operational-trace-preview-fade-duration) ease;
 }
 
 .operational-trace__marker--critical {
@@ -280,11 +345,26 @@
 
 .operational-trace__marker--warning {
     --operational-trace-marker-color: var(--operational-trace-warning);
-    /*color: #2b2b2b;*/
+}
+
+.operational-trace__marker[data-previewing='true'],
+.operational-trace__marker[data-selected='true'] {
+    display: grid;
+}
+
+.operational-trace__marker[data-previewing='true'][data-preview-phase='reveal'] {
+    animation: operational-trace-preview-marker 220ms ease forwards;
+    animation-delay: var(--operational-trace-preview-marker-delay);
+    animation-fill-mode: both;
+}
+
+.operational-trace__marker[data-previewing='true'][data-preview-phase='fade'] {
+    opacity: 0;
 }
 
 .operational-trace__marker[data-selected='true'] {
-    display: grid;
+    animation: none;
+    opacity: 1;
 }
 
 .operational-trace__marker-icon {
@@ -329,4 +409,96 @@
 
 .operational-trace__marker--contract .bi {
     font-size: var(--operational-trace-contract-chevron-size);
+}
+
+@keyframes operational-trace-preview-vertical {
+    from {
+        transform: translateX(-50%) scaleY(0);
+    }
+    to {
+        transform: translateX(-50%) scaleY(1);
+    }
+}
+
+@keyframes operational-trace-preview-local {
+    from {
+        transform: translateX(-50%) scaleY(0);
+    }
+    to {
+        transform: translateX(-50%) scaleY(1);
+    }
+}
+
+@keyframes operational-trace-preview-horizontal-forward {
+    from {
+        transform: translateY(-50%) scaleX(0);
+    }
+    to {
+        transform: translateY(-50%) scaleX(1);
+    }
+}
+
+@keyframes operational-trace-preview-horizontal-reverse {
+    from {
+        transform: translateY(-50%) scaleX(0);
+    }
+    to {
+        transform: translateY(-50%) scaleX(1);
+    }
+}
+
+@keyframes operational-trace-preview-marker {
+    from {
+        opacity: 0;
+        transform: scale(.55);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .operational-trace__route[data-previewing='true'][data-preview-phase='reveal']
+    .operational-trace__route-card-connector,
+    .operational-trace__route[data-previewing='true'][data-preview-phase='reveal']
+    .operational-trace__route-process-connector,
+    .operational-trace__route[data-previewing='true'][data-preview-phase='reveal']
+    .operational-trace__route-local-connector,
+    .operational-trace__route[data-previewing='true'][data-preview-phase='reveal']
+    .operational-trace__route-trunk,
+    .operational-trace__marker[data-previewing='true'][data-preview-phase='reveal'] {
+        animation-duration: 1ms;
+        animation-delay: 0ms;
+    }
+}
+
+@media only screen and (min-width: 350px) {}
+@media only screen and (min-width: 480px) {}
+@media only screen and (min-width: 1280px) {}
+@media only screen and (min-width: 1366px) {}
+@media only screen and (min-width: 1536px) {}
+@media only screen and (min-width: 1920px) {}
+@media only screen and (min-width: 2560px) {
+    .operational-trace-module {
+        --operational-trace-point-size: 25px;
+        --operational-trace-chevron-size: 14px;
+        --operational-trace-contract-chevron-size: 10px;
+    }
+
+    .operational-trace {
+        height: 2.9rem;
+    }
+    .operational-trace__route-trunk {
+        height: 5px;
+    }
+    .operational-trace__route-local-connector,
+    .operational-trace__route-card-connector,
+    .operational-trace__route-process-connector {
+        width: 5px;
+    }
+
+    .operational-trace__baseline {
+        height: 6px;
+    }
 }

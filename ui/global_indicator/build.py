@@ -27,7 +27,15 @@ def build_global_indicator(
     return html.Div(
         className='global-indicator',
         children=[
-            build_label(label=model.label, unit=model.unit),
-            *build_indicator_content(indicators=model.indicators),
+            build_label(
+                label=model.label, unit=model.unit, class_name=model.properties.label
+            ),
+            html.Div(
+                className='global-indicator__content',
+                children=build_indicator_content(
+                    indicators=model.indicators,
+                    properties=model.properties
+                ),
+            )
         ],
     )

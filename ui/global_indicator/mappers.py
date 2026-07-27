@@ -27,6 +27,7 @@ def map_global_indicator_data(
     return GlobalIndicatorData.from_iterable(
         label=definition.label,
         unit=definition.unit,
+        properties=definition.properties,
         indicators=(
             map_indicator_data(
                 indicator=indicator,

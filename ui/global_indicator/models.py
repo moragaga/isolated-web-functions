@@ -16,14 +16,35 @@ class IndicatorData:
 
 
 @dataclass(frozen=True, slots=True)
+class IndicatorPropertiesData:
+    label: int
+    temporality: str
+    real_value: str
+    plan_value: str
+    last_measurement_label: str
+    last_measurement_value: str
+
+@dataclass(frozen=True, slots=True)
 class GlobalIndicatorData:
     label: str
     unit: str
+    properties: IndicatorPropertiesData
     indicators: tuple[IndicatorData, ...]
 
     @classmethod
-    def from_iterable(cls, label: str, unit: str, indicators: tuple[IndicatorData, ...]) -> GlobalIndicatorData:
-        return cls(label=label, unit=unit, indicators=tuple(indicators))
+    def from_iterable(
+            cls,
+            label: str,
+            unit: str,
+            properties: IndicatorPropertiesData,
+            indicators: tuple[IndicatorData, ...]
+    ) -> GlobalIndicatorData:
+        return cls(
+            label=label,
+            unit=unit,
+            properties=properties,
+            indicators=tuple(indicators)
+        )
 
     def to_component(self) -> Component:
         from .build import build_global_indicator

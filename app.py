@@ -4,6 +4,7 @@ from dash import Dash, html
 import dash_bootstrap_components as dbc
 
 from demo import build_demo_layout, register_demo_callbacks
+from templates.index_string import get_index_page_string
 from test_metrics import component as tm
 from test_global_indicator import component as gi
 
@@ -22,6 +23,7 @@ with app.app_context():
         name=__name__,
         server=app,
         external_stylesheets=[dbc.icons.BOOTSTRAP],
+        index_string=get_index_page_string()
     )
 
 
@@ -33,7 +35,16 @@ with app.app_context():
     #     ]
     # )
 
-    app_dash.layout = build_demo_layout()
+    app_dash.layout = html.Div(
+        className='d-flex flex-column w-100',
+        children=[
+            build_demo_layout(),
+            html.Div(
+                children=gi
+            )
+        ]
+
+    )
 
     for trace_scope_id in (
             'process-demo',

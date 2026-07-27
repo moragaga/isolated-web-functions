@@ -3,11 +3,15 @@ from __future__ import annotations
 from dash import dcc, html
 from dash.development.base_component import Component
 
-from .enums import OperationalTraceMode
-from .geometry import resolve_alarm_route_geometry, resolve_process_positions
+from .enums import AlarmTone, OperationalTraceMode
+from .geometry import (
+    AlarmRouteGeometry,
+    resolve_alarm_route_geometry,
+    resolve_process_positions,
+)
 from .ids import OperationalTraceIds
 from .models import AlarmDefinition, OperationalTraceDefinition
-from .placement import resolve_alarm_placements
+from .placement import AlarmPlacement, resolve_alarm_placements
 from .serialization import serialize_snapshot
 from .visibility import resolve_alarm_visibility
 
@@ -18,14 +22,42 @@ def build_operational_trace_module(
     snapshot_version: str = '0',
     active_distributed_selection_key: str | None = None,
 ) -> Component:
+    preview = definition.preview
     return html.Section(
         id=OperationalTraceIds.module(definition.scope_id),
         className=(
             'operational-trace-module '
             f'operational-trace-module--{definition.mode.value}'
         ),
+        style={
+            '--operational-trace-preview-reveal-duration': (
+                f'{preview.reveal_duration_ms}ms'
+            ),
+            '--operational-trace-preview-hold-duration': (
+                f'{preview.hold_duration_ms}ms'
+            ),
+            '--operational-trace-preview-fade-duration': (
+                f'{preview.fade_duration_ms}ms'
+            ),
+        },
         **{
             'data-operational-trace-scope': definition.scope_id,
+            'data-operational-trace-mode': definition.mode.value,
+            'data-preview-enabled': str(preview.enabled).lower(),
+            'data-preview-reveal-ms': str(preview.reveal_duration_ms),
+            'data-preview-hold-ms': str(preview.hold_duration_ms),
+            'data-preview-fade-ms': str(preview.fade_duration_ms),
+            'data-preview-between-ms': str(preview.between_routes_ms),
+            'data-preview-cycle-pause-ms': str(preview.cycle_pause_ms),
+            'data-preview-max-cycle-size': str(preview.max_cycle_size),
+            'data-preview-keep-single-visible': str(
+                preview.keep_single_route_visible
+            ).lower(),
+            'data-preview-order-strategy': (
+                'left-to-right'
+                if definition.mode is OperationalTraceMode.INTEGRATED_OPERATIONS
+                else 'priority'
+            ),
         },
         children=[
             dcc.Store(
@@ -84,6 +116,9 @@ def build_operational_trace(
         **{
             'data-selected-alarm-id': '',
             'data-has-selection': 'false',
+            'data-preview-alarm-id': '',
+            'data-has-preview': 'false',
+            'data-preview-phase': 'idle',
         },
         children=[
             html.Div(
@@ -121,6 +156,7 @@ def build_operational_points(
     definition: OperationalTraceDefinition,
 ) -> list[Component]:
     process_positions = resolve_process_positions(definition=definition)
+    placements = resolve_alarm_placements(definition=definition)
     return [
         html.Div(
             className='operational-trace__point',
@@ -138,6 +174,7 @@ def build_operational_points(
                 *_build_point_markers(
                     definition=definition,
                     process_key=point.key,
+                    placements=placements,
                 ),
             ],
         )
@@ -294,6 +331,9 @@ def _build_alarm_card(
             'data-rotation-active': str(rotation_active).lower(),
             'data-alarm-id': alarm.alarm_id,
             'data-alarm-occurrence-id': alarm.selection_key,
+            'data-alarm-preview-key': alarm.preview_key,
+            'data-alarm-tone': alarm.tone.value,
+            'data-alarm-order': str(alarm.display_order),
         },
         children=[
             html.Div(
@@ -339,7 +379,7 @@ def _build_alarm_route(
     *,
     definition: OperationalTraceDefinition,
     alarm: AlarmDefinition,
-    placement,
+    placement: AlarmPlacement,
 ) -> Component:
     geometry = resolve_alarm_route_geometry(
         definition=definition,
@@ -349,6 +389,10 @@ def _build_alarm_route(
     children: list[Component] = []
 
     if geometry.has_horizontal_trunk:
+        timing = _resolve_route_preview_timing(
+            definition=definition,
+            geometry=geometry,
+        )
         children.extend(
             [
                 html.Span(
@@ -357,6 +401,7 @@ def _build_alarm_route(
                         '--operational-trace-line-x': (
                             f'{geometry.card_x_percent:.6f}%'
                         ),
+                        **timing['card'],
                     },
                 ),
                 html.Span(
@@ -368,6 +413,7 @@ def _build_alarm_route(
                         '--operational-trace-line-end': (
                             f'{geometry.trunk_end_x_percent:.6f}%'
                         ),
+                        **timing['trunk'],
                     },
                 ),
                 *[
@@ -377,9 +423,12 @@ def _build_alarm_route(
                         ),
                         style={
                             '--operational-trace-line-x': f'{position:.6f}%',
+                            **timing['process'][index],
                         },
                     )
-                    for position in geometry.process_x_percents
+                    for index, position in enumerate(
+                        geometry.process_x_percents
+                    )
                 ],
             ]
         )
@@ -390,6 +439,10 @@ def _build_alarm_route(
                 style={
                     '--operational-trace-line-x': (
                         f'{geometry.origin_x_percent:.6f}%'
+                    ),
+                    '--operational-trace-preview-delay': '0ms',
+                    '--operational-trace-preview-duration': (
+                        f'{definition.preview.reveal_duration_ms}ms'
                     ),
                 },
             )
@@ -402,12 +455,21 @@ def _build_alarm_route(
         ),
         className=(
             'operational-trace__route '
-            f'operational-trace__route--{alarm.tone.value}'
+            f'operational-trace__route--{alarm.tone.value} '
+            f'operational-trace__route--preview-{geometry.preview_direction}'
         ),
         **{
             'data-selected': 'false',
+            'data-previewing': 'false',
+            'data-preview-phase': 'idle',
             'data-alarm-id': alarm.alarm_id,
             'data-alarm-occurrence-id': alarm.selection_key,
+            'data-alarm-preview-key': alarm.preview_key,
+            'data-route-signature': alarm.route_signature,
+            'data-preview-direction': geometry.preview_direction,
+            'data-alarm-preview-position': (
+                f'{geometry.card_x_percent:.6f}'
+            ),
         },
         children=children,
     )
@@ -417,6 +479,7 @@ def _build_point_markers(
     *,
     definition: OperationalTraceDefinition,
     process_key: str,
+    placements: dict[str, AlarmPlacement],
 ) -> list[Component]:
     markers: list[Component] = []
     for alarm in definition.ordered_alarms:
@@ -426,6 +489,11 @@ def _build_point_markers(
         )
         if marker_type is None:
             continue
+        geometry = resolve_alarm_route_geometry(
+            definition=definition,
+            alarm=alarm,
+            placement=placements[alarm.selection_key],
+        )
         markers.append(
             html.Span(
                 id=OperationalTraceIds.marker(
@@ -438,8 +506,18 @@ def _build_point_markers(
                     f'operational-trace__marker--{marker_type} '
                     f'operational-trace__marker--{alarm.tone.value}'
                 ),
+                style=_resolve_marker_preview_timing(
+                    definition=definition,
+                    alarm=alarm,
+                    process_key=process_key,
+                    geometry=geometry,
+                ),
                 **{
                     'data-selected': 'false',
+                    'data-previewing': 'false',
+                    'data-preview-phase': 'idle',
+                    'data-alarm-occurrence-id': alarm.selection_key,
+                    'data-alarm-preview-key': alarm.preview_key,
                 },
                 children=_build_marker_icons(marker_type=marker_type),
             )
@@ -476,3 +554,74 @@ def _build_marker_icons(*, marker_type: str) -> list[Component]:
         for direction in directions
     ]
 
+
+def _resolve_route_preview_timing(
+    *,
+    definition: OperationalTraceDefinition,
+    geometry: AlarmRouteGeometry,
+) -> dict:
+    reveal_ms = definition.preview.reveal_duration_ms
+    card_duration_ms = max(1, round(reveal_ms * 0.2))
+    trunk_duration_ms = max(1, round(reveal_ms * 0.5))
+    process_start_ms = card_duration_ms + trunk_duration_ms
+    process_window_ms = max(1, reveal_ms - process_start_ms)
+    process_count = max(1, len(geometry.process_x_percents))
+    process_duration_ms = max(1, round(process_window_ms * 0.65))
+    process_step_ms = (
+        0
+        if process_count == 1
+        else max(
+            1,
+            round(
+                (process_window_ms - process_duration_ms)
+                / (process_count - 1)
+            ),
+        )
+    )
+    return {
+        'card': {
+            '--operational-trace-preview-delay': '0ms',
+            '--operational-trace-preview-duration': f'{card_duration_ms}ms',
+        },
+        'trunk': {
+            '--operational-trace-preview-delay': f'{card_duration_ms}ms',
+            '--operational-trace-preview-duration': f'{trunk_duration_ms}ms',
+        },
+        'process': tuple(
+            {
+                '--operational-trace-preview-delay': (
+                    f'{process_start_ms + (index * process_step_ms)}ms'
+                ),
+                '--operational-trace-preview-duration': (
+                    f'{process_duration_ms}ms'
+                ),
+            }
+            for index in range(process_count)
+        ),
+    }
+
+
+def _resolve_marker_preview_timing(
+    *,
+    definition: OperationalTraceDefinition,
+    alarm: AlarmDefinition,
+    process_key: str,
+    geometry: AlarmRouteGeometry,
+) -> dict:
+    reveal_ms = definition.preview.reveal_duration_ms
+    if geometry.is_local_route:
+        delay_ms = round(reveal_ms * 0.7)
+    else:
+        process_index = alarm.route_process_keys.index(process_key)
+        process_count = max(1, len(alarm.route_process_keys))
+        process_start_ms = round(reveal_ms * 0.72)
+        marker_window_ms = max(1, reveal_ms - process_start_ms)
+        marker_step_ms = (
+            0
+            if process_count == 1
+            else round(marker_window_ms / process_count)
+        )
+        delay_ms = process_start_ms + (process_index * marker_step_ms)
+    return {
+        '--operational-trace-preview-marker-delay': f'{delay_ms}ms',
+    }

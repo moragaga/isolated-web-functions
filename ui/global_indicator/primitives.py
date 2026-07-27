@@ -3,16 +3,17 @@ from __future__ import annotations
 from dash import html
 from dash.development.base_component import Component
 
-from .models import IndicatorData
+from .models import IndicatorData, IndicatorPropertiesData
 
 
 def build_label(
     *,
     label: str,
     unit: str,
+    class_name: str
 ) -> Component:
     return html.Div(
-        className='global-indicator__heading',
+        className=f'global-indicator__heading {class_name}',
         children=[
             html.P(
                 className='global-indicator__label',
@@ -33,6 +34,7 @@ def build_label(
 def build_indicator_content(
     *,
     indicators: tuple[IndicatorData, ...],
+    properties: IndicatorPropertiesData
 ) -> tuple[Component, Component | None]:
     last_measurement_component = None
     table_rows = []
@@ -40,12 +42,16 @@ def build_indicator_content(
     for indicator in indicators:
         if indicator.only_last_measurement:
             last_measurement_component = _build_last_measurement(
+                label_class_name=properties.last_measurement_label,
                 value=indicator.real_value,
+                value_class_name=properties.last_measurement_value,
                 color=indicator.color_value,
             )
             continue
 
-        table_rows.append(_build_table_row(model=indicator))
+        table_rows.append(
+            _build_table_row(model=indicator, properties=properties)
+        )
 
     return _build_table(rows=table_rows), last_measurement_component
 
@@ -65,24 +71,33 @@ def _build_table(
 def _build_table_row(
     *,
     model: IndicatorData,
+    properties: IndicatorPropertiesData,
 ) -> Component:
     return html.Tr(
         className='global-indicator__row',
         children=[
             _build_table_value_cell(
                 value=model.temporality,
-                value_class_name='global-indicator__value--temporality',
+                value_class_name='global-indicator__value--temporality {0}'.format(
+                    properties.temporality
+                ),
                 is_header=True,
             ),
             _build_table_value_cell(
                 value=model.real_value,
                 color=model.color_value,
-                value_class_name='global-indicator__value--real',
+                value_class_name='global-indicator__value--real {0}'.format(
+                    properties.real_value
+                ),
             ),
-            _build_table_separator_cell(),
+            _build_table_separator_cell(
+                class_name=properties.plan_value
+            ),
             _build_table_value_cell(
                 value=model.plan_value,
-                value_class_name='global-indicator__value--plan',
+                value_class_name='global-indicator__value--plan {0}'.format(
+                    properties.plan_value
+                ),
             ),
         ],
     )
@@ -114,12 +129,17 @@ def _build_table_value_cell(
     )
 
 
-def _build_table_separator_cell() -> Component:
+def _build_table_separator_cell(
+    *,
+    class_name: str,
+) -> Component:
     return html.Td(
         className='global-indicator__cell',
         children=[
             html.P(
-                className='global-indicator__separator',
+                className='global-indicator__separator {0}'.format(
+                    class_name
+                ),
                 children=['/'],
             ),
         ],
@@ -128,20 +148,25 @@ def _build_table_separator_cell() -> Component:
 
 def _build_last_measurement(
     *,
+    label_class_name: str,
     value: str | Component,
+    value_class_name: str,
     color: str | Component | None = None,
 ) -> Component:
     return html.Div(
         className='global-indicator__last-measurement',
         children=[
             html.P(
-                className='global-indicator__last-measurement-value {0}'.format(
+                className='global-indicator__last-measurement-value {0} {1}'.format(
+                    value_class_name,
                     _safe_color(color=color)
                 ),
                 children=[_safe_value(value=value)],
             ),
             html.P(
-                className='global-indicator__last-measurement-label',
+                className='global-indicator__last-measurement-label {0}'.format(
+                    label_class_name,
+                ),
                 children=['Última medición'],
             ),
         ],
