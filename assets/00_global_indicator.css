@@ -1,0 +1,129 @@
+:root {
+    --global-indicator-border: #BDBDBD;
+}
+
+html,
+body {
+    background: #FFFFFF !important;
+}
+
+p {
+    margin: 0 !important;
+    color: #4D4D4D;
+}
+
+.global-indicators {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    min-height: 10rem;
+}
+
+.global-indicator {
+    display: flex;
+    flex: 0 0 50%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .3rem;
+    min-width: 0;
+    min-height: 10rem;
+}
+
+.global-indicator__heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+    width: 100%;
+    min-width: 0;
+    padding-inline: .5rem;
+    font-weight: 600;
+}
+
+.global-indicator__label {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.global-indicator__icon,
+.global-indicator__unit {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.global-indicator__table {
+    width: auto;
+    background-color: transparent;
+    border-collapse: collapse;
+}
+
+.global-indicator__cell {
+    background-color: transparent;
+    vertical-align: middle;
+}
+
+.global-indicator__value,
+.global-indicator__separator {
+    line-height: 1;
+}
+
+.global-indicator__value--temporality {
+    padding: .3rem .4rem .3rem 0;
+    font-weight: 600;
+}
+
+.global-indicator__value--real {
+    padding: .3rem .1rem .3rem 0;
+    text-align: end;
+    font-weight: 800;
+}
+
+.global-indicator__separator {
+    padding: .3rem .1rem;
+}
+
+.global-indicator__value--plan {
+    padding: .3rem 0 .3rem .1rem;
+    text-align: start;
+    font-weight: 500;
+}
+
+.global-indicator__last-measurement {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.global-indicator__last-measurement-value {
+    font-weight: 700;
+}
+
+@media only screen and (min-width: 350px) {}
+@media only screen and (min-width: 480px) {}
+@media only screen and (min-width: 1280px) {
+    .global-indicators {
+        flex-wrap: nowrap;
+    }
+
+    .global-indicator {
+        flex: 1 1 0;
+        width: auto;
+        border-inline-end: 1px solid var(--global-indicator-border);
+    }
+
+    .global-indicator:first-child {
+        border-inline-start: 1px solid var(--global-indicator-border);
+    }
+}
+@media only screen and (min-width: 1366px) {}
+@media only screen and (min-width: 1536px) {}
+@media only screen and (min-width: 1920px) {}
+@media only screen and (min-width: 2560px) {}

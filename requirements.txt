@@ -1,0 +1,27 @@
+# DASH PACKAGES
+dash==4.0.0
+dash-bootstrap-components==2.0.4
+dash-ag-grid==33.3.3
+
+# FLASK PACKAGES
+Flask==3.1.3
+flask-cors==6.0.2
+flask-caching==2.3.1
+flask-compress==1.23
+flask-login==0.6.3
+
+# PROCESSING DATA PACKAGES / Version: 3.0.1 (error while debugging)
+pandas==3.0.3
+
+# SERVER PACKAGES
+gunicorn==25.1.0
+
+# CONNECTORS PACKAGES
+azure-cosmos==4.15.0
+
+# GENERAL PACKAGES
+python-dotenv==1.2.2
+pytz==2026.2
+
+# FORMATTER
+ruff==0.15.14
