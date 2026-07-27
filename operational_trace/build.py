@@ -9,6 +9,7 @@ from .ids import OperationalTraceIds
 from .models import AlarmDefinition, OperationalTraceDefinition
 from .placement import resolve_alarm_placements
 from .serialization import serialize_snapshot
+from .visibility import resolve_alarm_visibility
 
 
 def build_operational_trace_module(
@@ -33,6 +34,9 @@ def build_operational_trace_module(
                 data=serialize_snapshot(
                     definition=definition,
                     version=snapshot_version,
+                    active_distributed_selection_key=(
+                        active_distributed_selection_key
+                    ),
                 ),
             ),
             dcc.Store(
@@ -199,10 +203,13 @@ def _build_distributed_alarm_board(
         for alarm in definition.ordered_alarms
         if not alarm.is_distributed
     )
-    active_selection_key = _resolve_active_distributed_selection_key(
-        alarms=distributed_alarms,
-        active_selection_key=active_distributed_selection_key,
+    visibility = resolve_alarm_visibility(
+        definition=definition,
+        active_distributed_selection_key=(
+            active_distributed_selection_key
+        ),
     )
+    active_selection_key = visibility.active_distributed_selection_key
 
     return html.Div(
         id=OperationalTraceIds.board(definition.scope_id),
@@ -469,13 +476,3 @@ def _build_marker_icons(*, marker_type: str) -> list[Component]:
         for direction in directions
     ]
 
-
-def _resolve_active_distributed_selection_key(
-    *,
-    alarms: tuple[AlarmDefinition, ...],
-    active_selection_key: str | None,
-) -> str:
-    available_keys = {alarm.selection_key for alarm in alarms}
-    if active_selection_key in available_keys:
-        return active_selection_key
-    return alarms[0].selection_key

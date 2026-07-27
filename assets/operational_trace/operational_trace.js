@@ -22,9 +22,11 @@
     ) {
         const state = normalizeSelectionState(currentState);
         const availableKeys = new Set(
-            snapshot && Array.isArray(snapshot.selection_keys)
-                ? snapshot.selection_keys
-                : []
+            snapshot && Array.isArray(snapshot.selectable_selection_keys)
+                ? snapshot.selectable_selection_keys
+                : snapshot && Array.isArray(snapshot.selection_keys)
+                    ? snapshot.selection_keys
+                    : []
         );
         let selectedKey = availableKeys.has(state.selection_key)
             ? state.selection_key
@@ -65,9 +67,11 @@
     ) {
         const state = normalizeSelectionState(selectionState);
         const availableKeys = new Set(
-            snapshot && Array.isArray(snapshot.selection_keys)
-                ? snapshot.selection_keys
-                : []
+            snapshot && Array.isArray(snapshot.selectable_selection_keys)
+                ? snapshot.selectable_selection_keys
+                : snapshot && Array.isArray(snapshot.selection_keys)
+                    ? snapshot.selection_keys
+                    : []
         );
         const selectedKey = availableKeys.has(state.selection_key)
             ? state.selection_key

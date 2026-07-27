@@ -77,6 +77,7 @@ def _register_scope_callback(
         snapshot = serialize_snapshot(
             definition=definition,
             version=str(revision),
+            active_distributed_selection_key=active_selection_key,
         )
         snapshot['poll_sequence'] = n_intervals
 
