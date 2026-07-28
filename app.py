@@ -7,6 +7,7 @@ from demo import build_demo_layout, register_demo_callbacks
 from templates.index_string import get_index_page_string
 from test_metrics import component as tm
 from test_global_indicator import component as gi
+from test_wrapped_image import ch1, chs
 
 import sys
 
@@ -44,6 +45,12 @@ with app.app_context():
             build_demo_layout(),
             html.Div(
                 children=gi
+            ),
+            html.Div(
+                children=ch1,
+            ),
+            html.Div(
+                children=chs,
             )
         ]
 
