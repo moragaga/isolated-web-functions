@@ -8,6 +8,7 @@ from templates.index_string import get_index_page_string
 from test_metrics import component as tm
 from test_global_indicator import component as gi
 from test_wrapped_image import ch1, chs
+from test_card_point import points
 
 import sys
 
@@ -51,6 +52,12 @@ with app.app_context():
             ),
             html.Div(
                 children=chs,
+            ),
+            html.Div(
+                children=points
+            ),
+            html.Div(
+                children=tm
             )
         ]
 
