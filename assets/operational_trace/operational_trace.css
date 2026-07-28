@@ -254,22 +254,19 @@
     );
     transform: translate3d(-50%, 0, 0);
     transform-origin: top center;
+    z-index: 2;
 }
 
 .operational-trace__route-trunk {
-    inset-inline-start: calc(
-        var(--operational-trace-line-start) -
-        var(--operational-trace-joint-overlap)
-    );
+    inset-inline-start: var(--operational-trace-line-start);
     inset-block-start: var(--operational-trace-route-y);
     width: calc(
         var(--operational-trace-line-end) -
-        var(--operational-trace-line-start) +
-        var(--operational-trace-joint-overlap) +
-        var(--operational-trace-joint-overlap)
+        var(--operational-trace-line-start)
     );
     height: var(--operational-trace-route-line-size);
     transform: translate3d(0, -50%, 0);
+    z-index: 1;
 }
 
 .operational-trace__route--preview-forward .operational-trace__route-trunk {
@@ -295,6 +292,7 @@
     );
     transform: translate3d(-50%, 0, 0);
     transform-origin: top center;
+    z-index: 2;
 }
 
 .operational-trace__route-local-connector {
@@ -307,6 +305,7 @@
     );
     transform: translate3d(-50%, 0, 0);
     transform-origin: top center;
+    z-index: 2;
 }
 
 .operational-trace__route[data-previewing='true'][data-preview-phase='reveal']

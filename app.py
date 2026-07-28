@@ -12,6 +12,8 @@ import sys
 
 from operational_trace.callbacks import register_operational_trace_callbacks
 
+from test_alarms import alarms
+
 print("=" * 40)
 print("VERSIÓN DE PYTHON EN EJECUCIÓN:", sys.version)
 print("RUTA DEL EJECUTABLE:", sys.executable)
@@ -38,6 +40,7 @@ with app.app_context():
     app_dash.layout = html.Div(
         className='d-flex flex-column w-100',
         children=[
+            alarms,
             build_demo_layout(),
             html.Div(
                 children=gi
