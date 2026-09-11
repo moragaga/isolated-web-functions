@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(pwd)"
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN="${1:-}"
 
 remove_directory() {
@@ -32,9 +32,28 @@ export -f remove_file
 
 echo "Atlanticus clean started in: $ROOT"
 
-# 1. Eliminar archivos indeseados (ignorando .git, .venv y venv)
 find "$ROOT" \
-    \( -name '.git' -o -name '.venv' -o -name 'venv' \) -prune \
+    -path "$ROOT/.git" -prune \
+    -o -type d \( \
+        -name '__pycache__' \
+        -o -name '.pytest_cache' \
+        -o -name '.mypy_cache' \
+        -o -name '.ruff_cache' \
+        -o -name '.hypothesis' \
+        -o -name '.tox' \
+        -o -name '.nox' \
+        -o -name '.ipynb_checkpoints' \
+        -o -name 'htmlcov' \
+        -o -name '.venv' \
+        -o -name 'venv' \
+        -o -name '.virtualenv' \
+        -o -name 'virtualenv' \
+        -o -name 'build' \
+        -o -name 'dist' \
+        -o -name '*.egg-info' \
+        -o -name 'resultados' \
+        -o -name 'volumen' \
+    \) -prune \
     -o -type f \( \
         -name '*:Zone.Identifier' \
         -o -name '*.pyc' \
@@ -51,9 +70,8 @@ find "$ROOT" \
         -o -name '*~' \
     \) -exec bash -c 'remove_file "$1"' _ {} \;
 
-# 2. Eliminar directorios indeseados (ignorando .git, .venv y venv)
 find "$ROOT" \
-    \( -name '.git' -o -name '.venv' -o -name 'venv' \) -prune \
+    -path "$ROOT/.git" -prune \
     -o -type d \( \
         -name '__pycache__' \
         -o -name '.pytest_cache' \
@@ -64,6 +82,8 @@ find "$ROOT" \
         -o -name '.nox' \
         -o -name '.ipynb_checkpoints' \
         -o -name 'htmlcov' \
+        -o -name '.venv' \
+        -o -name 'venv' \
         -o -name '.virtualenv' \
         -o -name 'virtualenv' \
         -o -name 'build' \

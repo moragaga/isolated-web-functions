@@ -9,6 +9,7 @@ from test_metrics import component as tm
 from test_global_indicator import component as gi
 from test_wrapped_image import ch1, chs
 from test_card_point import points
+from test_stockpile import minas, stock
 
 import sys
 
@@ -42,6 +43,8 @@ with app.app_context():
     app_dash.layout = html.Div(
         className='d-flex flex-column w-100',
         children=[
+            minas,
+            stock,
             alarms,
             build_demo_layout(),
             html.Div(
